@@ -1,0 +1,55 @@
+import PySimpleGUI as sg
+import socket
+import threading
+
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+ip = 'localhost'
+port = input("Enter port:")
+server.bind((ip, int(port)))
+
+server.listen()
+print("Listening...")
+
+client, addr = server.accept()
+
+sg.theme('black')
+MLINE_KEY= '-MLINE-'+sg.WRITE_ONLY_KEY
+
+layout = [[sg.Text('\t\t    Hacking is our vision and mission', size=(60, 1,))],
+          #[sg.Image(r'ss.jpg')],
+          [sg.Output(size=(90, 25), font=('Helvetica 10 bold'),key='_OUT_', background_color="black",text_color='#80F708')],
+          [sg.Input(size=(55, 1), key='-QUERY-', do_not_clear=False,background_color="black",text_color='#F70115'),
+           sg.Button('SEND', button_color=(sg.YELLOWS[0], sg.GREENS[0]), bind_return_key=True),]]
+
+window = sg.Window('Tor-Chat', layout, font=('Helvetica', ' 13'), default_button_element_size=(5,1), use_default_focus=False, finalize=True)
+window['-QUERY-'].Widget.configure(highlightcolor='#80F708', highlightthickness=0.5)
+window.Element('_OUT_')._TKOut.output.bind("<Key>", lambda e: "break")
+
+def sender(client,addr,MLINE_KEY, layout,window):
+    event, value = window.read()
+    if event == 'SEND':
+        query = value['-QUERY-'].rstrip()
+        if not query:
+            pass
+        else:
+            print('{}'.format(query), flush=True)
+            client.send(bytes(query, 'utf-8'))
+    else:
+        #break
+        pass
+
+def reciver(client,addr,MLINE_KEY, layout, window):
+    data = client.recv(1024)
+    query = str(data, 'utf-8')
+    print('{}'.format(query), flush=True)
+
+
+while True:
+    reciver(client, addr, MLINE_KEY, layout, window)
+    sender(client, addr, MLINE_KEY, layout, window)
+    #senderthread = threading.Thread(target = sender, args = (client, addr ,MLINE_KEY, layout, window))
+    #senderthread.start()
+    #reciverthread = threading.Thread(target = reciver, args = (client, addr ,MLINE_KEY,layout, window))
+    #reciverthread.start()
+window.close()
